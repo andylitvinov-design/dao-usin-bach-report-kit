@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мини-проверка перехода по ступеням Дао</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #475467;
+      --line: #d0d5dd;
+      --accent: #0f766e;
+      --accent-soft: #ccfbf1;
+      --warn-bg: #fffaeb;
+      --warn-line: #fedf89;
+      --warn-text: #b54708;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% 0%, #e6fffa 0%, var(--bg) 45%);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 28px auto 40px;
+      padding: 0 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    h2 { margin: 0 0 6px; font-size: 22px; }
+    h3 { margin: 0 0 10px; font-size: 18px; }
+    .hint { margin: 0 0 18px; color: var(--muted); line-height: 1.45; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .grid-single {
+      max-width: 980px;
+      margin: 12px auto 0;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
+    }
+    .grid-single > .card + .card { margin-top: 14px; }
+    .label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .controls { display: grid; gap: 10px; }
+    .value-row { display: flex; align-items: center; gap: 10px; }
+    input[type="number"], input[type="text"] {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-height: 38px;
+      font-size: 15px;
+      width: 100%;
+      background: #fff;
+    }
+    input[type="number"] { width: 120px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .chip {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: #0f3f3b;
+      border: 1px solid #99f6e4;
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 4px 10px;
+      margin-bottom: 8px;
+    }
+    .range { margin: 0 0 10px; color: var(--muted); }
+    .muted { color: var(--muted); font-size: 14px; margin: 0; }
+    .empty {
+      color: #b42318;
+      background: #fef3f2;
+      border: 1px solid #fecdca;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    .summary {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fbfdff 0%, #f7fafc 100%);
+      padding: 12px;
+      line-height: 1.35;
+      min-height: 100%;
+    }
+    .summary-grid {
+      display: grid;
+      gap: 8px;
+    }
+    .report-text {
+      display: grid;
+      gap: 8px;
+    }
+    .hero-line {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: #101828;
+      overflow-wrap: anywhere;
+    }
+    .report-block {
+      border: 1px solid #dbe4ee;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 9px 10px;
+      line-height: 1.38;
+      min-width: 0;
+    }
+    .report-block p {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    .summary-card {
+      border: 1px solid #dbe4ee;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 8px 10px;
+    }
+    .summary-card p { margin: 0; }
+    .summary-label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .summary-card.is-accent {
+      border-color: #b8d9d3;
+      background: linear-gradient(180deg, #f0fdfa 0%, #f8fffd 100%);
+    }
+    .report-block.is-accent {
+      border-color: #b8d9d3;
+      background: linear-gradient(180deg, #f0fdfa 0%, #f8fffd 100%);
+    }
+    .summary-card.is-soft-alert {
+      border-color: #fedf89;
+      background: linear-gradient(180deg, #fffaf0 0%, #fffcf5 100%);
+    }
+    .report-block.is-soft-alert {
+      border-color: #fedf89;
+      background: linear-gradient(180deg, #fffaf0 0%, #fffcf5 100%);
+    }
+    .summary-card.is-risk {
+      border-color: #fecdca;
+      background: linear-gradient(180deg, #fff6f5 0%, #fffafa 100%);
+    }
+    .report-block.is-risk {
+      border-color: #fecdca;
+      background: linear-gradient(180deg, #fff6f5 0%, #fffafa 100%);
+    }
+    .file-warning {
+      display: none;
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #fecdca;
+      background: #fef3f2;
+      color: #7a271a;
+      line-height: 1.5;
+    }
+    .file-warning.is-visible { display: block; }
+    .file-warning strong { display: block; margin-bottom: 6px; }
+    .file-warning a {
+      color: #9e2f1f;
+      font-weight: 600;
+    }
+    .file-warning code {
+      background: rgba(122, 39, 26, 0.08);
+      border-radius: 6px;
+      padding: 1px 6px;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .status.low {
+      color: #0f766e;
+      background: #f0fdfa;
+      border-color: #99f6e4;
+    }
+    .status.medium {
+      color: var(--warn-text);
+      background: var(--warn-bg);
+      border-color: var(--warn-line);
+    }
+    .status.high {
+      color: #b42318;
+      background: #fef3f2;
+      border-color: #fecdca;
+    }
+    ul { margin: 0; padding-left: 18px; line-height: 1.45; }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .wing {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      min-width: 0;
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: none;
+    }
+    .field-group {
+      display: grid;
+      gap: 8px;
+      flex: 1;
+      align-content: start;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 56px;
+      gap: 10px;
+      align-items: end;
+    }
+    .mini-echo {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+    .note {
+      margin-top: 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .btn {
+      min-height: 38px;
+      border-radius: 8px;
+      border: 1px solid #99f6e4;
+      background: #f0fdfa;
+      color: #0f766e;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .btn:hover { background: #ccfbf1; }
+    .panel-title {
+      margin: 0 0 6px;
+      font-size: 14px;
+    }
+    .subpanel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fcfdff;
+    }
+    .subpanel-title {
+      margin: 0 0 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .goal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stack-top {
+      margin-top: 8px;
+    }
+    .meta-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 56px;
+      gap: 10px;
+      align-items: end;
+    }
+    .result-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: auto;
+      min-width: 0;
+    }
+    .export-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .export-note {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .result-panel .summary {
+      flex: 0 0 auto;
+      border-radius: 12px;
+      min-width: 0;
+    }
+    .module-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .module-title h3 {
+      margin: 0;
+    }
+    .lower-module .module-title {
+      margin-bottom: 10px;
+    }
+    .lower-module h3 {
+      font-size: 18px;
+    }
+    .lower-module .wing {
+      border-radius: 18px;
+      padding: 10px;
+    }
+    .lower-module .subpanel {
+      padding: 8px 10px;
+    }
+    .lower-module .label {
+      margin-bottom: 6px;
+    }
+    .lower-module .pair,
+    .lower-module .meta-line {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="file-warning" id="fileWarning">
+      <strong>Страница открыта как локальный файл (`file://`).</strong>
+      Chrome-расширения вроде Lightshot на таких страницах часто не работают, пока для расширения не включён доступ к локальным файлам.
+      Сейчас будет автоматическое перенаправление на локальный адрес через <span id="redirectCountdown">2</span> сек.
+      Откройте страницу через локальный адрес:
+      <a id="localhostLink" href="http://localhost:8876/mini_dao_transition_checker.html">http://localhost:8876/mini_dao_transition_checker.html</a>.
+      Если хотите оставить режим `file://`, включите в `chrome://extensions` для Lightshot опцию `Allow access to file URLs`.
+    </div>
+
+    <h1>Мини-проверка перехода по ступеням Дао</h1>
+    <p class="hint">Сверху можно определить текущую ступень по уровню ресурса «Я». В центральном модуле ниже можно сравнить, какой уровень был и каким стал, и получить смысл перехода по системе ступеней Дао.</p>
+
+    <section class="grid">
+      <div class="card">
+        <label class="label" for="resourceInput">Ресурс «Я»</label>
+        <div class="controls">
+          <div class="value-row">
+            <input id="resourceInput" type="number" min="0" max="10" step="0.1" value="3.8">
+            <strong id="valueEcho">3.8</strong>
+          </div>
+          <input id="resourceRange" type="range" min="0" max="10" step="0.1" value="3.8">
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="chip">DAO / У-Син</span>
+        <h2 id="stageName">-</h2>
+        <p class="range" id="stageRange"></p>
+        <div id="stageBody"></div>
+      </div>
+    </section>
+
+    <section class="grid-single lower-module">
+      <div class="module-title">
+        <div>
+          <span class="chip">DAO-анализ</span>
+          <h3>Сводный модуль</h3>
+        </div>
+      </div>
+      <div class="compare-grid">
+        <div class="card wing">
+          <h4 class="panel-title">Входные параметры</h4>
+          <div class="field-group">
+            <div class="subpanel">
+              <h5 class="subpanel-title">Ресурс «Я»</h5>
+              <div class="goal-grid">
+                <div>
+                  <label class="label" for="selfBeforeInput">Был</label>
+                  <div class="meta-line">
+                    <input id="selfBeforeInput" type="number" min="0" max="10" step="0.1" value="3.2">
+                  </div>
+                </div>
+                <div>
+                  <label class="label" for="selfAfterInput">Стал</label>
+                  <div class="meta-line">
+                    <input id="selfAfterInput" type="number" min="0" max="10" step="0.1" value="3.8">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <h5 class="subpanel-title">Ресурс цели</h5>
+              <div class="goal-grid">
+                <div>
+                  <label class="label" for="goalBeforeInput">Был</label>
+                  <div class="meta-line">
+                    <input id="goalBeforeInput" type="number" min="0" max="10" step="0.1" value="3.6">
+                  </div>
+                </div>
+                <div>
+                  <label class="label" for="goalAfterInput">Стал</label>
+                  <div class="meta-line">
+                    <input id="goalAfterInput" type="number" min="0" max="10" step="0.1" value="4.4">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <h5 class="subpanel-title">Изменение связи</h5>
+              <div class="goal-grid">
+                <div>
+                  <label class="label" for="bondBeforeInput">Связь: до</label>
+                  <input id="bondBeforeInput" type="text" placeholder="Например: холодная, слабая, конфликтная">
+                </div>
+                <div>
+                  <label class="label" for="bondAfterInput">Связь: после</label>
+                  <input id="bondAfterInput" type="text" placeholder="Например: теплее, ближе, устойчивее">
+                </div>
+              </div>
+            </div>
+
+            <p class="note">Справа: вывод и анализ по всем трем параметрам в логике текущей ступени DAO.</p>
+          </div>
+        </div>
+
+        <div class="card wing">
+          <h4 class="panel-title">Единый отчет</h4>
+          <div class="result-panel">
+            <div class="status medium" id="reportSeverity">Картина средней значимости</div>
+            <div class="summary" id="reportSummary"></div>
+            <div class="export-row">
+              <button class="btn" id="downloadClientPdfBtn" type="button">Загрузить отчет для клиента в PDF</button>
+              <p class="export-note">Откроется окно печати. Выберите «Сохранить как PDF».</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const stages = [
+      {
+        min: 0.0, max: 2.0, name: "Шторм", range: "0.0-2.0", stream: "Цзинь",
+        focus: "собрать опору и остановить утечки",
+        state: "хаос уходит, появляется минимальная устойчивость",
+        risk: "перепутать восстановление с форсированием и снова уйти в рассыпание",
+        nextFocus: "замедлиться, собрать режим и удержать базовую опору"
+      },
+      {
+        min: 2.0, max: 2.5, name: "Снежная Королева", range: "2.0-2.5", stream: "Цзинь",
+        focus: "мягко разморозить и согреть ресурс",
+        state: "подо льдом снова чувствуется жизнь",
+        risk: "попытаться резко раскачать систему и усилить хрупкость",
+        nextFocus: "давать тепло дозированно и наращивать доступность ресурса"
+      },
+      {
+        min: 2.5, max: 3.0, name: "Прометей", range: "2.5-3.0", stream: "Цзинь",
+        focus: "зажечь искру и дать ей вектор",
+        state: "появляется импульс действовать и ощущение силы",
+        risk: "сжечь искру на рывках, не успев перевести ее в устойчивость",
+        nextFocus: "фиксировать огонь в регулярных действиях и не расплескать импульс"
+      },
+      {
+        min: 3.0, max: 3.5, name: "Крепость", range: "3.0-3.5", stream: "Ци",
+        focus: "собрать структуру, ось и границы",
+        state: "опора становится заметно устойчивее",
+        risk: "застрять в обороне и спутать границы с изоляцией",
+        nextFocus: "укрепить ось, не закрываясь от внешнего мира полностью"
+      },
+      {
+        min: 3.5, max: 4.0, name: "Маяк / Королева в башне", range: "3.5-4.0", stream: "Ци",
+        focus: "разрешить бережный контакт с миром, сохраняя достоинство и опору",
+        state: "появляется интерес к людям и чувство социальной опоры",
+        risk: "уйти в холодную башню и не пустить жизнь к себе",
+        nextFocus: "открывать контакт постепенно, не теряя достоинства и внутренней опоры"
+      },
+      {
+        min: 4.0, max: 4.5, name: "Капитан", range: "4.0-4.5", stream: "Ци",
+        focus: "мягко взять управление жизнью и держать курс",
+        state: "формируется право управлять и выставлять границы",
+        risk: "соскользнуть в жесткий контроль и управление через напряжение",
+        nextFocus: "вести курс мягко, сочетая внутреннюю твердость и гибкость"
+      },
+      {
+        min: 4.5, max: 5.0, name: "Ручей", range: "4.5-5.0", stream: "Ци",
+        focus: "перевести силу в живое естественное течение",
+        state: "жизнь снова ощущается приятной и подвижной",
+        risk: "потерять форму в приятном течении и размыть вектор",
+        nextFocus: "сохранять живость контакта, не теряя направления"
+      },
+      {
+        min: 5.0, max: 5.5, name: "Тёплая река", range: "5.0-5.5", stream: "Ци",
+        focus: "укрепить умение быть в потоке и мягко контактировать с окружающими",
+        state: "появляется легкость в контактах и баланс между собой и миром",
+        risk: "перегрузить систему масштабом и обязанностями",
+        nextFocus: "расширять реализацию только там, где сохраняется качество потока"
+      },
+      {
+        min: 5.5, max: 6.0, name: "Горное озеро", range: "5.5-6.0", stream: "Ци",
+        focus: "развить глубокий контакт, умение впускать и отпускать без страха потери",
+        state: "укрепляются ясность, доверие и стабильные глубокие связи",
+        risk: "перейти на автопилот и перестать чувствовать корректировку курса",
+        nextFocus: "держать дальнюю траекторию и вовремя перенастраивать курс"
+      },
+      {
+        min: 6.0, max: 6.5, name: "Гавань с парусниками", range: "6.0-6.5", stream: "Ци",
+        focus: "укрепить устойчивость ресурсов и собрать силы для больших шагов",
+        state: "возникает готовность к действию и ощущение собранной энергии",
+        risk: "использовать мощность жестче, чем система и среда могут удержать",
+        nextFocus: "масштабировать влияние без потери экологичности и точности"
+      },
+      {
+        min: 6.5, max: 7.0, name: "Капитан, отправляющий корабли в путь", range: "6.5-7.0", stream: "Ци",
+        focus: "освоить управление большими процессами и потоками",
+        state: "появляются лидерство, влияние и готовность вести сложные проекты",
+        risk: "управлять масштабом жестче, чем выдерживает система",
+        nextFocus: "вести большие процессы без потери центра и экологичности"
+      },
+      {
+        min: 7.0, max: 7.5, name: "Громовержец / Владыка потока", range: "7.0-7.5", stream: "Ци",
+        focus: "удерживать мощный поток и направлять большие ресурсы осознанно",
+        state: "ресурсы идут свободно, появляется сила влиять на большие события",
+        risk: "переоценить мощность и начать давить силой вместо точности",
+        nextFocus: "сочетать мощь потока с точностью управления"
+      },
+      {
+        min: 7.5, max: 8.0, name: "Создатель миров / Дельта реки", range: "7.5-8.0", stream: "Ци",
+        focus: "строить устойчивые системы и направления, не теряя целостности",
+        state: "формируется способность создавать сеть стабильных потоков",
+        risk: "распылиться на слишком большое количество направлений",
+        nextFocus: "масштабировать только то, что остается живым и устойчивым"
+      },
+      {
+        min: 8.0, max: 8.5, name: "Хранитель морей", range: "8.0-8.5", stream: "Ци",
+        focus: "соединить силу и покой, стать устойчивым центром для других",
+        state: "мудрость и стабильность начинают удерживать не только себя, но и окружение",
+        risk: "застыть в статичном контроле под видом стабильности",
+        nextFocus: "держать центр спокойствия без потери живого движения"
+      },
+      {
+        min: 8.5, max: 9.0, name: "Провидец", range: "8.5-9.0", stream: "Ци",
+        focus: "соединить реализацию с качеством присутствия и видения",
+        state: "усиливается ясность пути и глубина восприятия",
+        risk: "уйти в видение без достаточной опоры в воплощении",
+        nextFocus: "связывать прозрение с точным действием и земной формой"
+      },
+      {
+        min: 9.0, max: 9.5, name: "Сюй", range: "9.0-9.5", stream: "Шэнь",
+        focus: "удерживать пустоту и прозрачность сознания",
+        state: "личное становится тише, поток Неба ощутимее",
+        risk: "раствориться в тишине и ослабить связь с конкретным действием",
+        nextFocus: "сохранять прозрачность, не теряя собранности в реальности"
+      },
+      {
+        min: 9.5, max: 10.0, name: "Постижение Дао", range: "9.5-10.0", stream: "Шэнь",
+        focus: "жить в согласии с законом Дао и у-вэй",
+        state: "присутствие само по себе сонастраивает пространство",
+        risk: "подменить естественность пассивностью или отказом от формы",
+        nextFocus: "удерживать у-вэй как точное естественное действие, а не уход от действия"
+      },
+      {
+        min: 10.0, max: 10.01, name: "У-цзи", range: "10.0", stream: "Шэнь",
+        focus: "пребывать в предельной целостности",
+        state: "недвойственное присутствие и полная сонастройка",
+        risk: "для прикладной интерпретации риск минимален, но язык описания уже условен",
+        nextFocus: "сохранять целостность и переводить ее в ясное присутствие в мире"
+      }
+    ];
+
+    const resourceInput = document.getElementById("resourceInput");
+    const resourceRange = document.getElementById("resourceRange");
+    const valueEcho = document.getElementById("valueEcho");
+    const stageName = document.getElementById("stageName");
+    const stageRange = document.getElementById("stageRange");
+    const stageBody = document.getElementById("stageBody");
+
+    const selfBeforeInput = document.getElementById("selfBeforeInput");
+    const selfAfterInput = document.getElementById("selfAfterInput");
+    const goalBeforeInput = document.getElementById("goalBeforeInput");
+    const goalAfterInput = document.getElementById("goalAfterInput");
+    const bondBeforeInput = document.getElementById("bondBeforeInput");
+    const bondAfterInput = document.getElementById("bondAfterInput");
+    const reportSeverity = document.getElementById("reportSeverity");
+    const reportSummary = document.getElementById("reportSummary");
+    const downloadClientPdfBtn = document.getElementById("downloadClientPdfBtn");
+    const fileWarning = document.getElementById("fileWarning");
+    const localhostLink = document.getElementById("localhostLink");
+    const redirectCountdown = document.getElementById("redirectCountdown");
+
+    function setupFileModeNotice() {
+      if (window.location.protocol !== "file:") return;
+      const suggestedUrl = "http://localhost:8876/mini_dao_transition_checker.html";
+      localhostLink.href = suggestedUrl;
+      localhostLink.textContent = suggestedUrl;
+      fileWarning.classList.add("is-visible");
+
+      let secondsLeft = 2;
+      const timer = window.setInterval(() => {
+        secondsLeft -= 1;
+        redirectCountdown.textContent = String(Math.max(secondsLeft, 0));
+        if (secondsLeft <= 0) {
+          window.clearInterval(timer);
+          window.location.replace(suggestedUrl);
+        }
+      }, 1000);
+    }
+
+    function normalizeValue(value) {
+      if (Number.isNaN(value)) return null;
+      if (value < 0) return 0;
+      if (value > 10) return 10;
+      return Math.round(value * 10) / 10;
+    }
+
+    function detectStage(value) {
+      return stages.find((stage) => value >= stage.min && value < stage.max) || null;
+    }
+
+    function renderStage(value) {
+      valueEcho.textContent = value === null ? "-" : value.toFixed(1);
+      if (value === null) {
+        stageName.textContent = "Нет корректного значения";
+        stageRange.textContent = "Введите число от 0 до 10";
+        stageBody.innerHTML = '<p class="empty">Невозможно определить ступень.</p>';
+        return;
+      }
+
+      const stage = detectStage(value);
+      if (!stage) {
+        stageName.textContent = "Ступень не определена";
+        stageRange.textContent = "Проверьте диапазон";
+        stageBody.innerHTML = '<p class="empty">Для этого значения нет правила.</p>';
+        return;
+      }
+
+      stageName.textContent = stage.name;
+      stageRange.textContent = "Диапазон: " + stage.range + " • Поток: " + stage.stream;
+      stageBody.innerHTML = "<ul>"
+        + "<li>Главная задача: " + stage.focus + ".</li>"
+        + "<li>Ключевое состояние: " + stage.state + ".</li>"
+        + "<li>Линия развития: " + stage.stream + ".</li>"
+        + "</ul>";
+    }
+
+    function importanceLabel(level) {
+      if (level === "high") return "Картина высокой значимости";
+      if (level === "medium") return "Картина средней значимости";
+      return "Картина точечной значимости";
+    }
+
+    function describeDelta(delta) {
+      if (delta > 0) return "Рост";
+      if (delta < 0) return "Снижение";
+      return "Без сдвига";
+    }
+
+    function parseBondText(text) {
+      const value = text.trim().toLowerCase();
+      if (!value) return { score: 0, tone: "neutral", text: "связь не описана" };
+
+      const positive = ["тепл", "близ", "довер", "жив", "мягк", "устойчив", "спокой", "люб", "контакт", "ясн", "лучше", "сильнее"];
+      const negative = ["холод", "дистан", "конфликт", "напряж", "обид", "боль", "разрыв", "тяжел", "страх", "хуже", "слаб", "нестаб"];
+
+      let score = 0;
+      positive.forEach((token) => { if (value.includes(token)) score += 1; });
+      negative.forEach((token) => { if (value.includes(token)) score -= 1; });
+
+      if (score > 0) return { score, tone: "positive", text: "связь описана как более теплая или живая" };
+      if (score < 0) return { score, tone: "negative", text: "связь описана как напряженная или ослабленная" };
+      return { score: 0, tone: "neutral", text: "связь описана нейтрально или неоднозначно" };
+    }
+
+    function classifyAlignment(selfAfterValue, goalAfterValue, selfDelta, goalDelta, bondShift) {
+      const gap = Math.round((goalAfterValue - selfAfterValue) * 10) / 10;
+      if (Math.abs(gap) <= 0.4 && selfDelta >= 0 && goalDelta >= 0 && bondShift.score >= 0) {
+        return {
+          label: "Параметры согласованы",
+          tone: "is-accent",
+          text: "Ресурс «Я», ресурс цели и описание связи собираются в одну устойчивую картину."
+        };
+      }
+      if (gap > 1.0) {
+        return {
+          label: "Цель опережает опору",
+          tone: "is-soft-alert",
+          text: "Ресурс цели уже ушел выше ресурса «Я». Для текущей ступени это может давать лишнее давление."
+        };
+      }
+      if (gap < -0.8 || goalDelta < 0) {
+        return {
+          label: "Опора сильнее цели",
+          tone: "is-soft-alert",
+          text: "Опора уже сильнее, чем включенность в цель. Возможно, цель просела или потеряла заряд."
+        };
+      }
+      if (bondShift.score < 0) {
+        return {
+          label: "Связь ослабла",
+          tone: "is-risk",
+          text: "Текст связи указывает на холод, дистанцию или напряжение. Это ослабляет общую устойчивость даже при росте ресурса."
+        };
+      }
+      return {
+        label: "Есть частичное расхождение",
+        tone: "is-soft-alert",
+        text: "Одна из осей пока отстает. Нужна мягкая подстройка без форсирования."
+      };
+    }
+
+    function renderUnifiedReport(selfBeforeValue, selfAfterValue, goalBeforeValue, goalAfterValue, bondBeforeText, bondAfterText) {
+      if (selfBeforeValue === null || selfAfterValue === null || goalBeforeValue === null || goalAfterValue === null) {
+        reportSeverity.className = "status high";
+        reportSeverity.textContent = "Нужно уточнить значения";
+        reportSummary.innerHTML = '<p class="empty">Введите корректные числовые значения для ресурса «Я» и ресурса цели.</p>';
+        return;
+      }
+
+      const currentStage = detectStage(selfAfterValue);
+      if (!currentStage) {
+        reportSeverity.className = "status high";
+        reportSeverity.textContent = "Ступень не определена";
+        reportSummary.innerHTML = '<p class="empty">Невозможно построить отчет без корректной текущей ступени DAO.</p>';
+        return;
+      }
+
+      const selfDelta = Math.round((selfAfterValue - selfBeforeValue) * 10) / 10;
+      const goalDelta = Math.round((goalAfterValue - goalBeforeValue) * 10) / 10;
+      const goalGap = Math.round((goalAfterValue - selfAfterValue) * 10) / 10;
+      const bondBefore = parseBondText(bondBeforeText);
+      const bondAfter = parseBondText(bondAfterText);
+      const bondShift = { score: bondAfter.score - bondBefore.score, after: bondAfter, before: bondBefore };
+      const alignment = classifyAlignment(selfAfterValue, goalAfterValue, selfDelta, goalDelta, bondShift);
+
+      let level = "low";
+      if (Math.abs(goalGap) >= 1.5 || bondShift.score <= -2 || selfAfterValue <= 2.5) {
+        level = "high";
+      } else if (Math.abs(goalGap) >= 0.7 || Math.abs(selfDelta) >= 0.7 || Math.abs(goalDelta) >= 0.7 || selfAfterValue < 4.5) {
+        level = "medium";
+      }
+
+      const selfVector = selfDelta > 0.2
+        ? "ресурс «Я» вырос"
+        : selfDelta < -0.2
+          ? "ресурс «Я» снизился"
+          : "ресурс «Я» почти не изменился";
+
+      const goalVector = goalDelta > 0.2
+        ? "ресурс цели вырос"
+        : goalDelta < -0.2
+          ? "ресурс цели снизился"
+          : "ресурс цели почти не изменился";
+
+      const bondVector = bondShift.score > 0
+        ? "связь по описанию стала теплее или живее"
+        : bondShift.score < 0
+          ? "связь по описанию стала холоднее или напряженнее"
+          : "связь по описанию изменилась неявно";
+
+      const coreMeaning = selfAfterValue < currentStage.max - 0.2 && selfAfterValue > currentStage.min + 0.2
+        ? "Ресурс «Я» проживается внутри ступени достаточно уверенно."
+        : "Ресурс «Я» стоит близко к границе ступени, поэтому система чувствительна к перегрузке или скачку.";
+
+      const unifiedConclusion = "Текущая ступень DAO: «" + currentStage.name + "»."
+        + " Главная задача здесь — " + currentStage.focus + ".";
+
+      const directConclusion = alignment.text;
+
+      const directAnalysis = coreMeaning
+        + " Для этой ступени сейчас это означает, что " + selfVector + ", " + goalVector + ", а " + bondVector + ".";
+
+      const daoFocus = "С учетом текущей ступени DAO основной акцент — " + currentStage.nextFocus + ".";
+
+      reportSeverity.className = "status " + level;
+      reportSeverity.textContent = importanceLabel(level);
+      reportSummary.innerHTML =
+        "<div class=\"report-text\">"
+        + "<p class=\"hero-line\">" + unifiedConclusion + "</p>"
+        + "<div class=\"report-block\"><p><strong>Вывод:</strong> " + directConclusion + "</p></div>"
+        + "<div class=\"report-block\"><p><strong>Анализ:</strong> " + directAnalysis + "</p></div>"
+        + "<div class=\"report-block " + alignment.tone + "\"><p><strong>Что важно:</strong> " + daoFocus + "</p></div>"
+        + "</div>";
+    }
+
+    function syncTopFromNumber() {
+      const value = normalizeValue(parseFloat(resourceInput.value));
+      if (value !== null) {
+        resourceInput.value = value.toFixed(1);
+        resourceRange.value = value.toFixed(1);
+      }
+      renderStage(value);
+      if (value !== null) {
+        selfAfterInput.value = value.toFixed(1);
+      }
+      updateUnifiedReport();
+    }
+
+    function syncTopFromRange() {
+      const value = normalizeValue(parseFloat(resourceRange.value));
+      if (value !== null) {
+        resourceInput.value = value.toFixed(1);
+      }
+      renderStage(value);
+      if (value !== null) {
+        selfAfterInput.value = value.toFixed(1);
+      }
+      updateUnifiedReport();
+    }
+
+    function updateUnifiedReport() {
+      const selfBeforeValue = normalizeValue(parseFloat(selfBeforeInput.value));
+      const selfAfterValue = normalizeValue(parseFloat(selfAfterInput.value));
+      const goalBeforeValue = normalizeValue(parseFloat(goalBeforeInput.value));
+      const goalAfterValue = normalizeValue(parseFloat(goalAfterInput.value));
+      const bondBeforeText = bondBeforeInput.value;
+      const bondAfterText = bondAfterInput.value;
+
+      if (selfBeforeValue !== null) {
+        selfBeforeInput.value = selfBeforeValue.toFixed(1);
+      }
+      if (selfAfterValue !== null) {
+        selfAfterInput.value = selfAfterValue.toFixed(1);
+      }
+      if (goalBeforeValue !== null) {
+        goalBeforeInput.value = goalBeforeValue.toFixed(1);
+      }
+      if (goalAfterValue !== null) {
+        goalAfterInput.value = goalAfterValue.toFixed(1);
+      }
+
+      renderUnifiedReport(selfBeforeValue, selfAfterValue, goalBeforeValue, goalAfterValue, bondBeforeText, bondAfterText);
+    }
+
+    resourceInput.addEventListener("input", syncTopFromNumber);
+    resourceRange.addEventListener("input", syncTopFromRange);
+    selfAfterInput.addEventListener("input", () => {
+      const value = normalizeValue(parseFloat(selfAfterInput.value));
+      if (value !== null) {
+        resourceInput.value = value.toFixed(1);
+        resourceRange.value = value.toFixed(1);
+        renderStage(value);
+      }
+      updateUnifiedReport();
+    });
+    selfBeforeInput.addEventListener("input", updateUnifiedReport);
+    goalBeforeInput.addEventListener("input", updateUnifiedReport);
+    goalAfterInput.addEventListener("input", updateUnifiedReport);
+    bondBeforeInput.addEventListener("input", updateUnifiedReport);
+    bondAfterInput.addEventListener("input", updateUnifiedReport);
+    downloadClientPdfBtn.addEventListener("click", () => {
+      window.print();
+    });
+
+    setupFileModeNotice();
+    syncTopFromNumber();
+    updateUnifiedReport();
+  </script>
+</body>
+</html>
