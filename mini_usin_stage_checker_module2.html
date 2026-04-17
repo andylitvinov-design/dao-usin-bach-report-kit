@@ -26,8 +26,25 @@
       margin: 28px auto;
       padding: 0 16px;
     }
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr minmax(280px, 360px);
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+    .topbar-actions {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
+    }
+    .topbar-actions .label {
+      margin-bottom: 6px;
+    }
     h1 { margin: 0 0 8px; font-size: 24px; }
-    .hint { margin: 0 0 18px; color: var(--muted); line-height: 1.45; }
+    .hint { margin: 0; color: var(--muted); line-height: 1.45; }
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -184,7 +201,37 @@
       display: block;
       margin-bottom: 4px;
     }
+    textarea {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-height: 96px;
+      font-size: 15px;
+      width: 100%;
+      background: #fff;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .transition-box {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px 12px;
+      line-height: 1.45;
+      display: grid;
+      gap: 8px;
+    }
+    .transition-box ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .transition-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
     @media (max-width: 900px) {
+      .topbar { grid-template-columns: 1fr; }
       .grid { grid-template-columns: 1fr; }
       .checklist { grid-template-columns: 1fr 1fr; }
     }
@@ -195,8 +242,23 @@
 </head>
 <body>
   <main class="wrap">
-    <h1>Мини-проверка ступени У-Син</h1>
-    <p class="hint">Слева ввод ресурса «Я», справа ступень и краткие особенности по DAO-модели.</p>
+    <section class="topbar">
+      <div>
+        <h1>Мини-проверка ступени У-Син</h1>
+        <p class="hint">Слева ввод ресурса «Я», справа ступень и краткие особенности по DAO-модели.</p>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="meta-grid">
+          <input id="clientName" type="text" placeholder="Имя клиента">
+          <input id="reportDate" type="date">
+        </div>
+        <div class="export-row">
+          <button class="btn" id="downloadPdfBtn" type="button">Скачать PDF</button>
+          <p class="export-note">Откроется системное окно печати. Выберите «Сохранить как PDF».</p>
+        </div>
+      </div>
+    </section>
 
     <section class="grid">
       <div class="card">
@@ -243,10 +305,6 @@
       <div class="card">
         <span class="chip">Результаты</span>
         <h3>Рекомендации по препаратам</h3>
-        <div class="meta-grid">
-          <input id="clientName" type="text" placeholder="Имя клиента">
-          <input id="reportDate" type="date">
-        </div>
         <label class="label">Рекомендации по каждому выбранному препарату</label>
         <div id="recommendList" class="recommend-list">
           <p class="muted">Выберите препараты слева, чтобы увидеть рекомендации справа.</p>
@@ -255,10 +313,35 @@
         <div class="selected">
           <label class="label">Общий итог по сочетанию препаратов</label>
           <div class="summary" id="overallText">Итоговая рекомендация появится после выбора препаратов.</div>
-          <div class="export-row">
-            <button class="btn" id="downloadPdfBtn" type="button">Скачать PDF</button>
-            <p class="export-note">Откроется системное окно печати. Выберите «Сохранить как PDF».</p>
-          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <span class="chip">Второй модуль</span>
+        <h3>Препараты, которые были ранее (уже не нужны)</h3>
+        <p class="muted">Введите один или несколько препаратов через запятую/точку с запятой, затем нажмите «Добавить в прошлые».</p>
+
+        <label class="label" for="pastBachInput">Ввод прошлых препаратов</label>
+        <div class="row">
+          <input id="pastBachInput" list="bachNames" type="text" placeholder="Например: Mimulus, Aspen; White Chestnut">
+          <button class="btn" id="addPastBtn" type="button">Добавить в прошлые</button>
+        </div>
+
+        <div class="selected">
+          <label class="label">Ранее нужные, сейчас не нужны</label>
+          <div class="pill-list" id="pastSelectedList"></div>
+          <p class="muted" id="pastSelectedEmpty">Пока список пуст.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="chip">Анализ динамики</span>
+        <h3>Анализ и рекомендации (было / осталось)</h3>
+        <p class="transition-label">Сопоставление строится по текущему списку «Выбрано» и списку «Ранее нужные, сейчас не нужны».</p>
+        <div class="transition-box" id="transitionReport">
+          <p class="muted">Добавьте «ранее нужные» препараты слева, чтобы увидеть сравнительный анализ справа.</p>
         </div>
       </div>
     </section>
@@ -351,26 +434,26 @@
     };
 
     const remedyGuidance = {
-      "Mimulus": "Что дает: снижает конкретные страхи и помогает мягче входить в контакт с нагрузкой.",
-      "Aspen": "Что дает: уменьшает фоновую тревожность и неопределенность, возвращает внутреннюю устойчивость.",
-      "White Chestnut": "Что дает: снижает навязчивый мыслительный шум, проясняет голову и сон.",
-      "Larch": "Что дает: поддерживает уверенность и готовность действовать без самоблокировки.",
-      "Olive": "Что дает: помогает при глубоком истощении, поддерживает восстановление ресурса.",
-      "Oak": "Что дает: снижает паттерн «тащить все на себе», помогает дозировать усилия.",
-      "Pine": "Что дает: уменьшает самообвинение и чувство вины, возвращает конструктивность.",
-      "Walnut": "Что дает: облегчает адаптацию к изменениям и укрепляет личные границы.",
-      "Rock Rose": "Что дает: помогает при острых страховых состояниях, снижает панический компонент.",
-      "Rescue Remedy": "Что дает: быстрый стабилизирующий эффект при остром стрессе и перегрузке.",
-      "Red Chestnut": "Что дает: уменьшает тревогу за близких и гиперконтроль в отношениях.",
-      "Star of Bethlehem": "Что дает: мягко поддерживает проживание шока и постстрессовых реакций.",
-      "Scleranthus": "Что дает: помогает при колебаниях и трудности выбора, добавляет внутреннюю определенность.",
-      "Rock Water": "Что дает: смягчает внутреннюю жесткость и чрезмерный перфекционизм.",
-      "Cherry Plum": "Что дает: снижает внутреннее давление и страх потери контроля.",
-      "Agrimony": "Что дает: снижает скрытое напряжение за внешней «нормальностью», повышает честность с собой.",
-      "Impatiens": "Что дает: уменьшает нетерпение и внутреннюю спешку, выравнивает темп.",
-      "Hornbeam": "Что дает: поддерживает включение в дела при ощущении «нет сил начать».",
-      "Mustard": "Что дает: помогает при эпизодах беспричинного спада и эмоциональной тени.",
-      "Wild Rose": "Что дает: повышает вовлеченность и жизненный тонус при апатичном фоне."
+      "Mimulus": "Помогает спокойнее обходиться с конкретными страхами и не сжиматься перед привычными жизненными задачами.",
+      "Aspen": "Подходит, когда есть беспричинная тревога или ощущение внутренней настороженности. Возвращает больше спокойствия и опоры.",
+      "White Chestnut": "Нужен, когда в голове слишком много повторяющихся мыслей. Помогает прояснить ум и легче отдыхать.",
+      "Larch": "Поддерживает уверенность в себе и помогает действовать без ожидания неудачи заранее.",
+      "Olive": "Полезен при сильной усталости и ощущении, что силы почти закончились. Поддерживает восстановление.",
+      "Oak": "Подходит тем, кто слишком долго держится на усилии и тащит все на себе. Помогает вовремя снижать нагрузку.",
+      "Pine": "Смягчает чувство вины и привычку обвинять себя даже там, где это не нужно.",
+      "Walnut": "Помогает легче проходить через перемены и меньше зависеть от внешнего влияния.",
+      "Rock Rose": "Поддерживает в состояниях острого страха, сильного напряжения или внутренней паники.",
+      "Rescue Remedy": "Нужен как быстрая поддержка в период перегруза, стресса или эмоционального сбоя.",
+      "Red Chestnut": "Подходит, когда слишком много тревоги за близких и трудно отпустить контроль.",
+      "Star of Bethlehem": "Мягко поддерживает после шока, болезненных событий и сильных эмоциональных потрясений.",
+      "Scleranthus": "Помогает, когда сложно выбрать, есть метания и внутренние качели.",
+      "Rock Water": "Смягчает излишнюю строгость к себе, внутреннюю жесткость и завышенные требования.",
+      "Cherry Plum": "Поддерживает, когда есть сильное внутреннее давление и страх потерять контроль над собой или ситуацией.",
+      "Agrimony": "Полезен, когда за внешним спокойствием прячется напряжение, а свои чувства трудно показывать.",
+      "Impatiens": "Помогает снизить внутреннюю спешку, раздражительность и вернуть более спокойный темп.",
+      "Hornbeam": "Подходит, когда трудно начать дела, хотя в целом силы есть. Помогает легче включаться.",
+      "Mustard": "Поддерживает в периоды необъяснимой внутренней тяжести, спада настроения и ощущения серого фона.",
+      "Wild Rose": "Помогает выйти из апатии, вернуть интерес к жизни и больше внутреннего отклика."
     };
 
     const themeToDomain = {
@@ -483,8 +566,14 @@
     const clientName = document.getElementById("clientName");
     const reportDate = document.getElementById("reportDate");
     const bachNames = document.getElementById("bachNames");
+    const pastBachInput = document.getElementById("pastBachInput");
+    const addPastBtn = document.getElementById("addPastBtn");
+    const pastSelectedList = document.getElementById("pastSelectedList");
+    const pastSelectedEmpty = document.getElementById("pastSelectedEmpty");
+    const transitionReport = document.getElementById("transitionReport");
 
     const selected = new Set();
+    const noLongerNeeded = new Set();
 
     function normalizeValue(v) {
       if (Number.isNaN(v)) return null;
@@ -502,19 +591,25 @@
       if (value === null) {
         stageName.textContent = "Нет корректного значения";
         stageRange.textContent = "Введите число от 0 до 10";
-        stageBody.innerHTML = '<p class="empty">Невозможно определить ступень.</p>';
+        stageBody.innerHTML = '<p class="empty">Не получилось определить ступень. Введите число от 0 до 10.</p>';
         return;
       }
       const s = detectStage(value);
       if (!s) {
         stageName.textContent = "Ступень не определена";
         stageRange.textContent = "Проверьте диапазон";
-        stageBody.innerHTML = '<p class="empty">Для этого значения нет правила.</p>';
+        stageBody.innerHTML = '<p class="empty">Для этого значения пока нет подходящего описания.</p>';
         return;
       }
       stageName.textContent = s.name;
       stageRange.textContent = "Диапазон: " + s.range;
-      stageBody.innerHTML = "<ul>" + s.points.map((p) => "<li>" + p + "</li>").join("") + "</ul>";
+      stageBody.innerHTML =
+        "<p class='muted'>Сейчас состояние больше всего похоже на этот этап развития ресурса.</p>" +
+        "<ul>" +
+        "<li><strong>Что это за этап:</strong> " + s.points[0] + "</li>" +
+        "<li><strong>Главная задача:</strong> " + s.points[1] + "</li>" +
+        "<li><strong>На что сейчас опираться:</strong> " + s.points[2] + "</li>" +
+        "</ul>";
     }
 
     function canonicalize(name) {
@@ -573,8 +668,9 @@
       const names = Array.from(selected);
 
       if (!names.length) {
-        recommendList.innerHTML = '<p class="muted">Выберите препараты слева, чтобы увидеть рекомендации справа.</p>';
-        overallText.textContent = "Итоговая рекомендация появится после выбора препаратов.";
+        recommendList.innerHTML = '<p class="muted">Выберите препараты слева, и здесь появится понятное пояснение по каждому из них.</p>';
+        overallText.textContent = "После выбора препаратов здесь появится общий смысл сочетания простым и понятным языком.";
+        renderTransitionAnalysis();
         return;
       }
 
@@ -583,8 +679,8 @@
       sortedNames.forEach((name) => {
         const card = document.createElement("div");
         card.className = "rec-item";
-        const text = remedyGuidance[name] || "Что дает: поддерживает эмоциональный баланс и помогает мягче выровнять текущее состояние.";
-        card.innerHTML = "<strong>" + name + "</strong><span>" + text + "</span>";
+        const text = remedyGuidance[name] || "Поддерживает эмоциональное равновесие и помогает мягче пройти текущий период.";
+        card.innerHTML = "<strong>" + name + "</strong><span><strong>Зачем сейчас:</strong> " + text + "</span>";
         recommendList.appendChild(card);
       });
 
@@ -611,8 +707,8 @@
       const profileParts = [];
       if (currentStage && currentValue !== null) {
         profileParts.push(
-          "Профиль состояния: ресурс «Я» " + currentValue.toFixed(1) +
-          ", стадия «" + currentStage.name + "» (" + currentStage.range + ")."
+          "Сейчас ресурс «Я» на уровне " + currentValue.toFixed(1) +
+          ". По шкале DAO это стадия «" + currentStage.name + "» (" + currentStage.range + ")."
         );
       }
 
@@ -620,21 +716,21 @@
         const lead = domainInsights[dominantDomains[0]];
         if (lead) {
           profileParts.push(
-            "Ведущий контур: " + lead.label + " — " + lead.meaning + "."
+            "Сейчас на первом плане тема " + lead.label + ". Проще говоря, " + lead.meaning + "."
           );
           profileParts.push(
-            "Ключевой фокус: " + lead.focus + "."
+            "Сейчас важнее всего " + lead.focus + "."
           );
         }
 
         if (dominantDomains[1]) {
           const second = domainInsights[dominantDomains[1]];
           if (second) {
-            profileParts.push("Второй контур: " + second.label + " — " + second.meaning + ".");
+            profileParts.push("Вторым слоем идет тема " + second.label + ": " + second.meaning + ".");
           }
         }
       } else {
-        profileParts.push("Профиль состояния: выбранная комбинация поддерживает базовую стабилизацию и мягкое выравнивание эмоционального фона.");
+        profileParts.push("По текущему сочетанию препаратов акцент идет на мягкую стабилизацию состояния и более ровный эмоциональный фон.");
       }
 
       const hasAnxiety = dominantDomains.includes("anxiety");
@@ -643,17 +739,271 @@
       const hasSelfWorth = dominantDomains.includes("self_worth");
 
       if (hasAnxiety && hasControl) {
-        profileParts.push("Риск-петля: тревога может усиливать контроль, а избыточный контроль повышает внутреннее напряжение.");
+        profileParts.push("Похоже, тревога и контроль сейчас подпитывают друг друга: чем больше внутреннего напряжения, тем сильнее хочется все держать под контролем.");
       }
       if (hasDepletion && (hasAnxiety || hasControl)) {
-        profileParts.push("Ресурсная рекомендация: сначала восстановление энергии, затем расширение задач; иначе возможен откат состояния.");
+        profileParts.push("Поэтому сначала лучше вернуть силы и устойчивость, а уже потом повышать нагрузку. Иначе состояние может снова быстро просесть.");
       }
       if (hasSelfWorth) {
-        profileParts.push("Психологический акцент: укреплять самоценность через короткие завершаемые шаги и снижение самокритики.");
+        profileParts.push("Отдельно стоит поддержать самоценность: меньше внутренней критики и больше небольших действий, которые возвращают опору на себя.");
       }
 
-      profileParts.push("Выбрано: " + sortedNames.join(", ") + ".");
+      profileParts.push("Поэтому текущий набор препаратов логично поддерживает такие задачи: " + sortedNames.join(", ") + ".");
       overallText.textContent = profileParts.join(" ");
+      renderTransitionAnalysis();
+    }
+
+    function addPastManyFromInput(raw) {
+      const parts = raw.split(/[;,\n]+/).map((x) => x.trim()).filter(Boolean);
+      parts.forEach((p) => {
+        const c = canonicalize(p);
+        if (c) noLongerNeeded.add(c);
+      });
+      renderPastSelected();
+    }
+
+    function removePastItem(name) {
+      noLongerNeeded.delete(name);
+      renderPastSelected();
+    }
+
+    function collectDomainScores(names) {
+      const tagCounts = {};
+      names.forEach((n) => {
+        (tagMap[n] || []).forEach((t) => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+      });
+
+      const domainScores = {};
+      Object.entries(tagCounts).forEach(([tag, weight]) => {
+        const domain = themeToDomain[tag];
+        if (!domain) return;
+        domainScores[domain] = (domainScores[domain] || 0) + weight;
+      });
+      return domainScores;
+    }
+
+    function collectTagScores(names) {
+      const tagCounts = {};
+      names.forEach((n) => {
+        (tagMap[n] || []).forEach((t) => { tagCounts[t] = (tagCounts[t] || 0) + 1; });
+      });
+      return tagCounts;
+    }
+
+    function renderPastSelected() {
+      const arr = Array.from(noLongerNeeded).sort((a, b) => a.localeCompare(b));
+      pastSelectedList.innerHTML = "";
+      pastSelectedEmpty.style.display = arr.length ? "none" : "block";
+
+      arr.forEach((name) => {
+        const el = document.createElement("span");
+        el.className = "pill";
+        el.innerHTML = `<span>${name}</span><button type="button" aria-label="Удалить ${name}">×</button>`;
+        el.querySelector("button").addEventListener("click", () => removePastItem(name));
+        pastSelectedList.appendChild(el);
+      });
+
+      renderTransitionAnalysis();
+    }
+
+    function buildResolvedText(domainKey) {
+      const map = {
+        anxiety: "стало меньше внутренней тревоги и напряжения",
+        control: "снизилась потребность все жестко контролировать",
+        depletion: "ресурс стал более ровным, меньше ощущения истощения",
+        self_worth: "прибавилось опоры на себя, меньше самокритики",
+        boundaries: "легче удерживать личные границы в контакте с людьми",
+        trauma: "снизилась чувствительность к стрессовым триггерам",
+        cognitive: "мысли стали спокойнее, появилась большая ясность",
+        identity: "появилось больше понимания своего направления"
+      };
+      return map[domainKey] || "";
+    }
+
+    function buildKeyChangeText(domainKey) {
+      const map = {
+        anxiety: "человек стал спокойнее реагировать на неопределенность и меньше жить в режиме внутренней тревоги",
+        control: "появилось больше доверия к процессу и меньше потребности держать все под жестким контролем",
+        depletion: "восстановился базовый запас сил, стало легче выдерживать обычную дневную нагрузку",
+        self_worth: "укрепилась внутренняя опора: меньше самокритики, больше принятия себя",
+        boundaries: "стали устойчивее личные границы, легче сохранять себя в общении",
+        trauma: "снизилась острота постстрессовых реакций, нервная система стала стабильнее",
+        cognitive: "ум стал более спокойным и собранным, меньше мыслительной перегрузки",
+        identity: "прояснилось направление, выросло чувство собственного курса"
+      };
+      return map[domainKey] || "";
+    }
+
+    function buildSameThemeText(domainKey) {
+      const map = {
+        anxiety: "тема тревоги еще остается актуальной, но обычно уже переживается мягче и осознаннее, чем раньше",
+        control: "тема контроля еще сохраняется, но человек уже меньше держится за жесткие способы справляться",
+        depletion: "тема усталости еще требует внимания, хотя общее состояние уже стало ровнее",
+        self_worth: "тема самоценности еще укрепляется, но внутренняя опора уже формируется",
+        boundaries: "тема личных границ еще донастраивается, хотя удерживать себя стало легче",
+        trauma: "последствия сильного напряжения еще требуют бережности, но нервная система уже реагирует устойчивее",
+        cognitive: "тема мыслительной перегрузки еще не до конца ушла, но ясности уже стало больше",
+        identity: "тема собственного пути еще разворачивается, хотя направление уже начинает проясняться"
+      };
+      return map[domainKey] || "";
+    }
+
+    function buildTagText(tag) {
+      const map = {
+        "дефицит контакта": "болезненная нехватка отклика и живого контакта",
+        "потребность во внимании": "потребность постоянно добирать внимание извне",
+        "тревога": "внутренняя тревога",
+        "неопределенность": "трудность спокойно выдерживать неопределенность",
+        "неуверенность": "сомнения в себе",
+        "поиск внешнего мнения": "потребность опираться на чужое мнение сильнее, чем на свое",
+        "страх": "конкретные страхи",
+        "уязвимость": "ощущение уязвимости",
+        "самокритика": "избыточная самокритика",
+        "вина": "чувство вины",
+        "границы": "трудность удерживать личные границы",
+        "уступчивость": "излишняя уступчивость",
+        "контроль": "потребность все контролировать",
+        "внутреннее давление": "сильное внутреннее давление",
+        "ментальный шум": "мыслительная перегрузка",
+        "навязчивые мысли": "навязчивые повторяющиеся мысли",
+        "колебания": "внутренние метания",
+        "трудность выбора": "трудность с выбором",
+        "истощение": "сильная усталость",
+        "ресурсный дефицит": "нехватка внутренних сил",
+        "перегруз": "перегрузка",
+        "самооценка": "неустойчивая самооценка",
+        "поиск пути": "неясность собственного направления",
+        "самоопределение": "поиск своего курса"
+      };
+      return map[tag] || tag;
+    }
+
+    function formatHumanList(items) {
+      if (!items.length) return "";
+      if (items.length === 1) return items[0];
+      if (items.length === 2) return items[0] + " и " + items[1];
+      return items.slice(0, -1).join(", ") + " и " + items[items.length - 1];
+    }
+
+    function renderTransitionAnalysis() {
+      const past = Array.from(noLongerNeeded).sort((a, b) => a.localeCompare(b));
+      const current = Array.from(selected).sort((a, b) => a.localeCompare(b));
+
+      transitionReport.innerHTML = "";
+
+      if (!past.length) {
+        transitionReport.innerHTML = '<p class="muted">Добавьте слева препараты, которые раньше были нужны, и здесь появится понятная динамика: что уже ушло, а что еще остается актуальным.</p>';
+        return;
+      }
+
+      const stillNeeded = current.filter((name) => !noLongerNeeded.has(name));
+      const overlap = current.filter((name) => noLongerNeeded.has(name));
+      const pastTagScores = collectTagScores(past);
+      const activeTagScores = collectTagScores(stillNeeded);
+      const pastScores = collectDomainScores(past);
+      const activeScores = collectDomainScores(stillNeeded);
+      const allDomains = Object.keys({ ...pastScores, ...activeScores });
+      const allTags = Object.keys({ ...pastTagScores, ...activeTagScores });
+
+      const reducedTags = allTags
+        .map((tag) => [tag, (pastTagScores[tag] || 0) - (activeTagScores[tag] || 0)])
+        .filter(([, delta]) => delta > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map((x) => x[0]);
+
+      const currentTags = allTags
+        .map((tag) => [tag, (activeTagScores[tag] || 0) - (pastTagScores[tag] || 0)])
+        .filter(([, delta]) => delta > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map((x) => x[0]);
+
+      const deltaResolved = allDomains
+        .map((key) => [key, (pastScores[key] || 0) - (activeScores[key] || 0)])
+        .filter(([, delta]) => delta > 0)
+        .sort((a, b) => b[1] - a[1]);
+
+      const unchangedDomains = allDomains
+        .map((key) => [key, Math.min(pastScores[key] || 0, activeScores[key] || 0)])
+        .filter(([, weight]) => weight > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map((x) => x[0]);
+
+      const resolvedDomains = deltaResolved.slice(0, 2).map((x) => x[0]);
+      const keyChangedDomain = deltaResolved.length ? deltaResolved[0][0] : null;
+      const stillActiveDomain = unchangedDomains.length ? unchangedDomains[0] : null;
+
+      const intro = document.createElement("p");
+      intro.textContent = "Раньше были актуальны препараты: " + past.join(", ") + ".";
+      transitionReport.appendChild(intro);
+
+      const status = document.createElement("p");
+      status.textContent = stillNeeded.length
+        ? "Сейчас еще остаются актуальны: " + stillNeeded.join(", ") + "."
+        : "Сейчас по текущему списку видно, что дополнительная поддержка препаратами может уже не требоваться.";
+      transitionReport.appendChild(status);
+
+      const ul = document.createElement("ul");
+
+      if (keyChangedDomain) {
+        const li = document.createElement("li");
+        const keyText = buildKeyChangeText(keyChangedDomain);
+        li.textContent = keyText
+          ? "Главный сдвиг: " + keyText + "."
+          : "Главный сдвиг: наиболее выраженная ранняя нагрузка уже заметно снизилась.";
+        ul.appendChild(li);
+      }
+
+      if (reducedTags.length) {
+        const li = document.createElement("li");
+        const reducedText = reducedTags.slice(0, 2).map(buildTagText);
+        li.textContent = "Что уже стало легче: меньше выражены " + formatHumanList(reducedText) + ".";
+        ul.appendChild(li);
+      }
+
+      if (resolvedDomains.length) {
+        const li = document.createElement("li");
+        const resolvedText = resolvedDomains.map(buildResolvedText).filter(Boolean);
+        li.textContent = resolvedText.length
+          ? "Хороший признак динамики: " + resolvedText.join("; ") + "."
+          : "Хороший признак динамики: часть ранних эмоциональных нагрузок уже выровнялась.";
+        ul.appendChild(li);
+      }
+
+      if (currentTags.length) {
+        const li = document.createElement("li");
+        const currentText = currentTags.slice(0, 2).map(buildTagText);
+        li.textContent = "Сейчас в фокусе остаются: " + formatHumanList(currentText) + ".";
+        ul.appendChild(li);
+      }
+
+      if (!keyChangedDomain && stillActiveDomain) {
+        const li = document.createElement("li");
+        const sameThemeText = buildSameThemeText(stillActiveDomain);
+        li.textContent = sameThemeText
+          ? "При этом видно, что " + sameThemeText + "."
+          : "При этом видно, что основная тема состояния еще сохраняется, хотя форма поддержки уже меняется.";
+        ul.appendChild(li);
+      }
+
+      if (overlap.length) {
+        const li = document.createElement("li");
+        li.textContent = "Нужно уточнить список: " + overlap.join(", ") + " одновременно отмечены как «уже не нужны» и «еще нужны». Выберите для них один актуальный статус.";
+        ul.appendChild(li);
+      }
+
+      if (!stillNeeded.length && !overlap.length) {
+        const li = document.createElement("li");
+        li.textContent = "Что можно сделать сейчас: 7-10 дней спокойно понаблюдать состояние без препаратов и отмечать сон, уровень напряжения, настроение и устойчивость в течение дня.";
+        ul.appendChild(li);
+      }
+
+      if (!ul.children.length) {
+        const li = document.createElement("li");
+        li.textContent = "Состав поддержки уже изменился. Это хороший знак: часть прежних состояний ослабла, а текущий этап требует более точной и мягкой настройки.";
+        ul.appendChild(li);
+      }
+
+      transitionReport.appendChild(ul);
     }
 
     function escapeHtml(str) {
@@ -672,10 +1022,16 @@
       return d.toLocaleDateString("ru-RU");
     }
 
+    function listToTableValue(items) {
+      if (!items.length) return "<span class='empty-row'>Нет данных.</span>";
+      return items.map((item) => "<span class='tag'>" + escapeHtml(item) + "</span>").join("");
+    }
+
     function buildPdfHtml() {
       const value = normalizeValue(Number.parseFloat(resourceInput.value));
       const stage = value === null ? null : detectStage(value);
       const selectedNames = Array.from(selected).sort((a, b) => a.localeCompare(b));
+      const pastNames = Array.from(noLongerNeeded).sort((a, b) => a.localeCompare(b));
       const rows = selectedNames.map((name) => {
         const text = remedyGuidance[name] || "Поддерживает эмоциональный баланс и мягкое выравнивание текущего состояния.";
         return "<tr><td>" + escapeHtml(name) + "</td><td>" + escapeHtml(text) + "</td></tr>";
@@ -687,6 +1043,9 @@
       const stageRangeText = stage ? stage.range : "-";
       const stageFeatures = stage ? stage.points.join(" ") : "Недостаточно данных для определения стадии.";
       const overall = overallText.textContent || "-";
+      const transitionHtml = transitionReport.innerHTML
+        ? transitionReport.innerHTML
+        : "<p class='empty-row'>Динамика пока не сформирована.</p>";
 
       return "<!doctype html><html lang='ru'><head><meta charset='utf-8'><title>Отчет У-Син</title>" +
         "<style>" +
@@ -696,6 +1055,11 @@
         "table{width:100%;border-collapse:collapse;margin:8px 0 14px;}" +
         "th,td{border:1px solid #d1d5db;padding:8px 10px;vertical-align:top;}" +
         "th{background:#f3f4f6;text-align:left;}" +
+        "ul{margin:8px 0 0;padding-left:20px;}li{margin:0 0 6px;}" +
+        "p{margin:0 0 8px;}" +
+        ".tag{display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border:1px solid #cbd5e1;border-radius:999px;background:#f8fafc;font-size:12px;}" +
+        ".analysis-cell p:last-child,.analysis-cell ul:last-child{margin-bottom:0;}" +
+        ".empty-row{color:#4b5563;}" +
         ".small{font-size:12px;color:#4b5563;}" +
         "@media print { body{margin:12mm;} }" +
         "</style></head><body>" +
@@ -717,6 +1081,12 @@
         "<h2>3. Общий итог</h2>" +
         "<table><tr><th>Итоговая рекомендация по сочетанию препаратов</th></tr>" +
         "<tr><td>" + escapeHtml(overall) + "</td></tr></table>" +
+
+        "<h2>4. Второй модуль: динамика</h2>" +
+        "<table><tr><th style='width:30%'>Параметр</th><th>Значение</th></tr>" +
+        "<tr><td>Ранее нужные препараты</td><td>" + listToTableValue(pastNames) + "</td></tr>" +
+        "<tr><td>Текущие выбранные препараты</td><td>" + listToTableValue(selectedNames) + "</td></tr>" +
+        "<tr><td>Анализ изменений</td><td class='analysis-cell'>" + transitionHtml + "</td></tr></table>" +
 
         "<p class='small'>Отчет сформирован автоматически из текущей формы.</p>" +
         "</body></html>";
@@ -768,11 +1138,25 @@
         }
       });
 
+      addPastBtn.addEventListener("click", () => {
+        addPastManyFromInput(pastBachInput.value);
+        pastBachInput.value = "";
+        pastBachInput.focus();
+      });
+
+      pastBachInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addPastBtn.click();
+        }
+      });
+
       downloadPdfBtn.addEventListener("click", downloadPdfReport);
 
       reportDate.value = new Date().toISOString().slice(0, 10);
 
       renderSelected();
+      renderPastSelected();
     }
 
     function onValueChange(raw) {
