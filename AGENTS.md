@@ -1,21 +1,25 @@
-# Repo Agent Notes
+# Agent entrypoint — PDF reports
 
-## File Links That Open Reliably In Chat
+Если задача связана с созданием клиентского PDF-отчёта, сначала прочитать:
 
-Problem:
-- Chat links can fail when a file path contains Cyrillic characters, spaces, or decomposed Unicode symbols.
+1. `MASTER_REPORT_INSTRUCTIONS.md` — главный и приоритетный стандарт содержания, дизайна, сохранения текста и QA.
+2. Нужный структурный шаблон:
+   - `Шаблон первичного отчета Алхимия.md`
+   - `Шаблон первичного отчета УСИН.md`
+   - `Шаблон повторного отчета Алхимия.md`
+3. `Чек-лист первичного отчета Алхимия.md` — финальная проверка.
+4. Для визуального референса использовать `andylitvinov-design/report` на tree/commit `6bbaa3f` и актуальную светлую форму «Алхимия Души / Маяк».
 
-Rule:
-- For any file I want the user to open from chat, create a mirror copy in an ASCII-only path with no spaces.
-- Preferred stable folder: `/Users/andriilitvinov/projects/alchemy_reports`.
-- Preferred filename style: `snake_case` in ASCII, e.g. `case1_primary_template.md`.
-- Share links only to this stable copy.
+## Правило приоритета
 
-Process:
-1. Save or generate the main file.
-2. Copy it to the stable ASCII path.
-3. Verify the file exists (`ls -l`) and is readable (`sed -n '1,20p'`).
-4. Return the clickable absolute link to the stable copy.
+Текст пользователя > `MASTER_REPORT_INSTRUCTIONS.md` > структурный шаблон > старые README / примеры.
 
-Link format:
-- `[name](/Users/andriilitvinov/projects/alchemy_reports/file_name.md)`
+Если старый файл требует «коротко 1–2 минуты», ограничивает число пунктов или подталкивает к сокращению пользовательского текста, это правило считать устаревшим.
+
+## Ключевой запрет
+
+Не превращать отчёт в мелкий корпоративный шаблон. Не уменьшать шрифт ради числа страниц. Не пересказывать авторский текст вместо его сохранения. Не придумывать диагностику, препараты, дозировки или медицинские обещания.
+
+## File links
+
+Для файлов, которые должны открываться из локального чата/среды, использовать ASCII-only имя без пробелов. Перед выдачей проверить существование и читаемость файла. Для файлов, созданных в ChatGPT runtime, отдавать фактическую sandbox-ссылку, а не выдуманный локальный путь.
